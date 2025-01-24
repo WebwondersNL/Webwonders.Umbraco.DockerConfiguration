@@ -52,6 +52,9 @@ jobs:
         id: extract_version
         run: echo "VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')" >> $GITHUB_ENV
 
+      - name: Copy README.md for Packaging
+        run: cp README.md ./src/Webwonders.Umbraco.DockerConfiguration/
+
       - name: Publish package to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
