@@ -43,8 +43,10 @@ jobs:
         with:
           dotnet-version: 8.0
 
-      - name: Set up NuGet
-        run: dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget
+      - name: Ensure NuGet source exists
+        run: |
+          dotnet nuget list source | grep -q "https://api.nuget.org/v3/index.json" || \
+          dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget
 
       - name: Publish package to NuGet
         env:
