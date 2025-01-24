@@ -1,0 +1,70 @@
+# Ignore Visual Studio temporary files, build results, and
+# user-specific files
+
+## Rider
+.idea/
+*.iml
+
+## Visual Studio
+.vs/
+*.user
+*.suo
+*.sln.docstates
+
+# User-specific files
+*.userosscache
+*.userprefs
+
+# Mono auto generated files
+mono_crash.*
+
+# Backup & report files from converting an old project file
+_UpgradeReport_Files/
+Backup*/
+
+# Windows image file caches
+Thumbs.db
+Thumbs.db:encryptable
+ ehthumbs.db
+ ehthumbs_vista.db
+
+# Folder config file
+desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Output folders
+bin/
+obj/
+out/
+
+# Build folder created with `dotnet build` commands
+artifacts/
+
+# Lock file
+project.lock.json
+project.fragment.lock.json
+
+# Legacy or auto-generated IDE files
+*.userosscache
+*.sln.docstates
+
+# JetBrains Rider
+.idea/
+.idea_modules/
+.DS_Store
+
+# Resharper
+_ReSharper*/
+*.*.DotSettings
+.idea/
+.idea_modules/
+
+# Rider logs
+.idea_modules/
+.DS_Store

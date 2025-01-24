@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Webwonders.Umbraco.DockerConfiguration", "src\Webwonders.Umbraco.DockerConfiguration\Webwonders.Umbraco.DockerConfiguration.csproj", "{DEC53536-D342-4189-B2F7-0C2ED1D9018A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DEC53536-D342-4189-B2F7-0C2ED1D9018A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DEC53536-D342-4189-B2F7-0C2ED1D9018A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DEC53536-D342-4189-B2F7-0C2ED1D9018A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DEC53536-D342-4189-B2F7-0C2ED1D9018A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
