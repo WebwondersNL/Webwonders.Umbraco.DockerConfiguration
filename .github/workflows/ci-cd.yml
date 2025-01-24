@@ -48,12 +48,16 @@ jobs:
           dotnet nuget list source | grep -q "https://api.nuget.org/v3/index.json" || \
           dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget
 
+      - name: Extract version from tag
+        id: extract_version
+        run: echo "VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')" >> $GITHUB_ENV
+
       - name: Publish package to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+          VERSION: ${{ env.VERSION }}
         run: |
-          VERSION=$(echo ${{ github.ref_name }} | sed 's/v//')
-          dotnet pack ./src/Webwonders.Umbraco.DockerConfiguration/Webwonders.Umbraco.DockerConfiguration.csproj --configuration Release /p:PackageVersion=$VERSION --output ./artifacts
+          dotnet pack ./src/Webwonders.Umbraco.DockerConfiguration/Webwonders.Umbraco.DockerConfiguration.csproj --configuration Release /p:Version=$VERSION --output ./artifacts
           dotnet nuget push ./artifacts/*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json
 
   release:

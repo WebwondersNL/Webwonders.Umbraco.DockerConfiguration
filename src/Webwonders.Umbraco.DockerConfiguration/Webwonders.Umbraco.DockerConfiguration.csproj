@@ -4,7 +4,29 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+         
+        <!-- Basic Information -->
+        <PackageId>Webwonders.Umbraco.DockerConfiguration</PackageId>
+        <Version Condition="'$(VERSION)' != ''">$(VERSION)</Version>
+        <Authors>Webwonders</Authors>
+        <Description>Simplifies Docker-based SQL Server configurations for Umbraco projects.</Description>
+        <PackageTags>umbraco-marketplace,Umbraco,Docker,SQL Server,Configuration</PackageTags>
+
+        <!-- URLs -->
+        <ProjectUrl>https://github.com/WebwondersNL/Webwonders.Umbraco.DockerConfiguration</ProjectUrl>
+        <RepositoryUrl>https://github.com/WebwondersNL/Webwonders.Umbraco.DockerConfiguration</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>webwonders.png</PackageIcon>
+
+        <!-- Umbraco Specific Metadata -->
+        <UmbracoVersion>13.0.0</UmbracoVersion>
+        <UmbracoPackageId>Webwonders.Umbraco.DockerConfiguration</UmbracoPackageId>
     </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="webwonders.png" Pack="true" PackagePath="" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
