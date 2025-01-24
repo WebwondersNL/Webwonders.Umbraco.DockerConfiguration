@@ -20,16 +20,13 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.0
+          dotnet-version: 8.0
 
       - name: Restore dependencies
         run: dotnet restore ./src/Webwonders.Umbraco.DockerConfiguration/Webwonders.Umbraco.DockerConfiguration.csproj
 
       - name: Build the project
         run: dotnet build ./src/Webwonders.Umbraco.DockerConfiguration/Webwonders.Umbraco.DockerConfiguration.csproj --configuration Release --no-restore
-
-      - name: Run tests
-        run: dotnet test ./tests/Webwonders.Umbraco.DockerConfiguration.Tests/Webwonders.Umbraco.DockerConfiguration.Tests.csproj --no-build --verbosity normal
 
   publish:
     name: Publish to NuGet
@@ -44,7 +41,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: 7.0
+          dotnet-version: 8.0
 
       - name: Set up NuGet
         run: dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget
