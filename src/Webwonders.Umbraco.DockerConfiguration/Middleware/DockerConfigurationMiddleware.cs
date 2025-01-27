@@ -81,7 +81,7 @@ public static class DockerConfigurationMiddleware
             {
                 { "ConnectionStrings:umbracoDbDSN", connectionString },
                 { "ConnectionStrings:umbracoDbDSN_ProviderName", Constants.ProviderNames.SQLServer }
-            });
+            }!);
 
             Console.WriteLine("Database connection string successfully set.");
         }
