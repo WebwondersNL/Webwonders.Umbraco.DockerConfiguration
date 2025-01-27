@@ -1,0 +1,23 @@
+{
+  "$schema": "https://marketplace.umbraco.com/umbraco-marketplace-schema.json",
+  "AuthorDetails": {
+    "Name": "Webwonders",
+    "Description": "Webwonders is a digital agency and Umbraco Platinum Partner based in Eindhoven, the Netherlands.",
+    "Url": "https://www.webwonders.nl/",
+    "ImageUrl": "https://www.webwonders.nl/Images/logo/Webwonders icon.png",
+    "SyncContributorsFromRepository": true
+  },
+  "Category": "Developer Tools",
+  "Description": "Webwonders.Umbraco.DockerConfiguration is a lightweight NuGet package that automatically configures a Docker-based SQL Server for Umbraco 13+. This package requires no changes to your Program.cs. This package is only intended for local development scenarios, where you need a cross-platform way to spin up a SQL Server instance inside Docker.Webwonders.Umbraco.DockerConfiguration is a lightweight NuGet package that automatically configures a Docker-based SQL Server for Umbraco 13+. This package requires no changes to your Program.cs. This package is only intended for local development scenarios, where you need a cross-platform way to spin up a SQL Server instance inside Docker.",
+  "IssueTrackerUrl": "https://github.com/WebwondersNL/Webwonders.Umbraco.DockerConfiguration/issues",
+  "DocumentationUrl": "https://github.com/WebwondersNL/Webwonders.Umbraco.DockerConfiguration#readme",
+  "LicenseTypes": [ "Free" ],
+  "IsSubPackageOf": "",
+  "PackageType": "Package",
+  "PackagesByAuthor": [],
+  "RelatedPackages": [],
+  "Screenshots": [],
+  "Tags": [ "Umbraco Cloud", "Umbraco", "Docker", "SQL Server", "Configuration" ],
+  "Title": "Webwonders Umbraco DockerConfiguration",
+  "VideoUrl": ""
+}
