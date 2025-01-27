@@ -1,62 +1,32 @@
 ﻿using System.Diagnostics;
-using System.Reflection;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 
 namespace Webwonders.Umbraco.DockerConfiguration;
 
 /// <summary>
-/// Middleware to configure a Docker-based SQL Server setup for Umbraco projects.
+/// Middleware to configure a Docker-based SQL Server setup for Umbraco projects
+/// using environment variables.
 /// </summary>
 public static class DockerConfigurationMiddleware
 {
-    /// <summary>
-    /// Configures Docker SQL Server for Umbraco if enabled in the environment variables.
-    /// </summary>
-    /// <param name="builder">The IConfigurationBuilder to dynamically add the connection string.</param>
     public static void ConfigureDockerSqlDb(IConfigurationBuilder builder)
     {
-        var projectName = Assembly.GetEntryAssembly()?.GetName().Name;
-        if (projectName == null)
-        {
-            Console.WriteLine("Error: Unable to determine project name.");
-            return;
-        }
+        // Directly read from environment variables
+        var useLocalSql = Environment.GetEnvironmentVariable("Use_Local_Docker_SQL") ?? "false";
+        var dbName      = Environment.GetEnvironmentVariable("Local_Docker_DB_NAME");
+        var dbPassword  = Environment.GetEnvironmentVariable("Local_Docker_PASSWORD");
+        var dbPort      = Environment.GetEnvironmentVariable("Local_Docker_PORT");
 
-        var projectRootPath = GetProjectRootPath(projectName);
-        if (projectRootPath == null)
-        {
-            Console.WriteLine("Error: Unable to determine project root path.");
-            return;
-        }
-
-        var launchSettingsPath = Path.Combine(projectRootPath, "Properties", "launchSettings.json");
-
-        if (!File.Exists(launchSettingsPath))
-        {
-            Console.WriteLine($"Error: launchSettings.json not found at path: {launchSettingsPath}");
-            return;
-        }
-
-        var launchSettingsJson = File.ReadAllText(launchSettingsPath);
-        using var document = JsonDocument.Parse(launchSettingsJson);
-
-        var profile = document.RootElement
-            .GetProperty("profiles")
-            .GetProperty("UmbracoProject")
-            .GetProperty("environmentVariables");
-
-        var useLocalSql = GetJsonValue(profile, "Use_Local_Docker_SQL") ?? "false";
-        var dbName = GetJsonValue(profile, "Local_Docker_DB_NAME");
-        var dbPassword = GetJsonValue(profile, "Local_Docker_PASSWORD");
-        var dbPort = GetJsonValue(profile, "Local_Docker_PORT");
-
-        if (useLocalSql == "true")
+        if (useLocalSql.Equals("true", StringComparison.OrdinalIgnoreCase))
         {
             if (string.IsNullOrEmpty(dbName) || string.IsNullOrEmpty(dbPassword) || string.IsNullOrEmpty(dbPort))
             {
                 throw new Exception(
-                    "Error: SQL Server configuration is incomplete. Please check launchSettings.json and add Local_Docker_DB_NAME, Local_Docker_PASSWORD and Local_Docker_PORT to the environmentVariables or set Use_Local_Docker_SQL to false.");
+                    "Error: SQL Server configuration is incomplete. " +
+                    "Ensure 'Local_Docker_DB_NAME', 'Local_Docker_PASSWORD', and " +
+                    "'Local_Docker_PORT' are set, or disable 'Use_Local_Docker_SQL'."
+                );
             }
 
             Console.WriteLine("Starting Docker configuration check...");
@@ -73,7 +43,6 @@ public static class DockerConfigurationMiddleware
             }
 
             Console.WriteLine("Docker is installed and running.");
-
             Console.WriteLine("Local SQL configuration detected. Generating Docker Compose file...");
 
             var dockerComposeContent = $@"
@@ -101,20 +70,18 @@ public static class DockerConfigurationMiddleware
             Console.WriteLine("Attempting to start Docker Compose...");
             if (!StartDockerCompose(dockerComposePath))
             {
-                throw new Exception($"Failed to start Docker Compose. Please follow these steps to start it manually: \n" +
+                throw new Exception($"Failed to start Docker Compose. Please follow these steps:\n" +
                                     $"1. Navigate to: {AppContext.BaseDirectory}\n" +
-                                    $"2. Run the following command:\n" +
-                                    $"docker-compose -f '{dockerComposePath}' up -d\n" +
-                                    $"3. Ensure Docker is running properly and retry if necessary.");
+                                    $"2. Run: docker-compose -f '{dockerComposePath}' up -d\n" +
+                                    "3. Ensure Docker is running properly and retry if necessary.");
             }
 
             var connectionString = $"Server=localhost,{dbPort};Database={dbName};User Id=sa;Password={dbPassword};TrustServerCertificate=True;";
-
             builder.AddInMemoryCollection(new Dictionary<string, string>
             {
                 { "ConnectionStrings:umbracoDbDSN", connectionString },
                 { "ConnectionStrings:umbracoDbDSN_ProviderName", Constants.ProviderNames.SQLServer }
-            }!);
+            });
 
             Console.WriteLine("Database connection string successfully set.");
         }
@@ -215,22 +182,5 @@ public static class DockerConfigurationMiddleware
         {
             Console.WriteLine($"Please open your browser and visit: {url}");
         }
-    }
-
-    private static string? GetJsonValue(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var value) ? value.GetString() : null;
-    }
-
-    private static string? GetProjectRootPath(string projectName)
-    {
-        var directoryInfo = new DirectoryInfo(AppContext.BaseDirectory);
-
-        while (directoryInfo != null && !directoryInfo.Name.Equals(projectName, StringComparison.OrdinalIgnoreCase))
-        {
-            directoryInfo = directoryInfo.Parent;
-        }
-
-        return directoryInfo?.FullName;
     }
 }
