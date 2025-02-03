@@ -36,6 +36,7 @@
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.3.0" />
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
+      <PackageReference Include="Umbraco.Cms.Core" Version="[13.0.0,15.0.0)" />
     </ItemGroup>
 
 </Project>
