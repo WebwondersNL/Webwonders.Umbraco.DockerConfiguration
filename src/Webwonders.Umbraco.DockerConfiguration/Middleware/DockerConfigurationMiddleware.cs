@@ -76,7 +76,7 @@ public static class DockerConfigurationMiddleware
                                     "3. Ensure Docker is running properly and retry if necessary.");
             }
 
-            var connectionString = $"Server=localhost,{dbPort};Database={dbName};User Id=sa;Password={dbPassword};TrustServerCertificate=True;";
+            var connectionString = $"Server=127.0.0.1,{dbPort};Database={dbName};User Id=sa;Password={dbPassword};TrustServerCertificate=True;";
             builder.AddInMemoryCollection(new Dictionary<string, string>
             {
                 { "ConnectionStrings:umbracoDbDSN", connectionString },
