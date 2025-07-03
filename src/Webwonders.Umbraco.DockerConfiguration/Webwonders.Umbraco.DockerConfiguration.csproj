@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
          
@@ -20,7 +20,7 @@
         <PackageIcon>webwonders.png</PackageIcon>
 
         <!-- Umbraco Specific Metadata -->
-        <UmbracoVersion>13.0.0</UmbracoVersion>
+        <UmbracoVersion>16.0.0</UmbracoVersion>
         <UmbracoPackageId>Webwonders.Umbraco.DockerConfiguration</UmbracoPackageId>
     </PropertyGroup>
 
@@ -34,9 +34,10 @@
     </ItemGroup>
     
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.3.0" />
-      <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
-      <PackageReference Include="Umbraco.Cms.Core" Version="[13.0.0,15.0.0)" />
+        <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.3.0" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.1" />
+        <PackageReference Include="Umbraco.Cms.Core" Version="[13.0.0,15.0.0)" Condition="'$(TargetFramework)' == 'net8.0'" />
+        <PackageReference Include="Umbraco.Cms.Core" Version="16.*" Condition="'$(TargetFramework)' == 'net9.0'" />
     </ItemGroup>
 
 </Project>
