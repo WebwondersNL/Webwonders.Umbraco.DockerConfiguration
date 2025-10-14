@@ -42,6 +42,8 @@ DockerConfigurationMiddleware.ConfigureDockerSqlDb(builder.Configuration);
 ```json
 "environmentVariables": {
   "Use_Local_Docker_SQL": "true",
+  "Local_Docker_PROJECT_NAME": "MyProject",
+  "Local_Docker_CONTAINER_DIRECTORY_OVERRIDE": "C:\\a\\path\\to\\goto",
   "Local_Docker_DB_NAME": "MyDatabase",
   "Local_Docker_PASSWORD": "YourStrongPassword123",
   "Local_Docker_PORT": "1433"

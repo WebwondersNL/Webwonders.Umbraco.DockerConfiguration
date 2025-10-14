@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using System.Text.Json;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 
 namespace Webwonders.Umbraco.DockerConfiguration;
@@ -12,11 +12,21 @@ public static class DockerConfigurationMiddleware
 {
     public static void ConfigureDockerSqlDb(IConfigurationBuilder builder)
     {
+        
         // Directly read from environment variables
         var useLocalSql = Environment.GetEnvironmentVariable("Use_Local_Docker_SQL") ?? "false";
         var dbName      = Environment.GetEnvironmentVariable("Local_Docker_DB_NAME");
         var dbPassword  = Environment.GetEnvironmentVariable("Local_Docker_PASSWORD");
         var dbPort      = Environment.GetEnvironmentVariable("Local_Docker_PORT");
+        
+        //Override to handle breaking change introduced in 16.1
+        var projectRootOverride = Environment.GetEnvironmentVariable("Local_Docker_CONTAINER_DIRECTORY_OVERRIDE");
+        var projectRoot = !string.IsNullOrEmpty(projectRootOverride)
+            ? projectRootOverride
+            : Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+        
+        var defaultProjectName = Path.GetFileName(projectRoot);
+        var projectName = Environment.GetEnvironmentVariable("Local_Docker_PROJECT_NAME") ?? defaultProjectName;
 
         if (useLocalSql.Equals("true", StringComparison.OrdinalIgnoreCase))
         {
@@ -63,15 +73,16 @@ public static class DockerConfigurationMiddleware
               sqlserverdata_{dbName}:
             ";
 
-            var dockerComposePath = Path.Combine(AppContext.BaseDirectory, "docker-compose.yml");
+            
+            var dockerComposePath = Path.Combine(projectRoot, "docker-compose.yml");
             File.WriteAllText(dockerComposePath, dockerComposeContent);
             Console.WriteLine("docker-compose.yml generated successfully.");
 
             Console.WriteLine("Attempting to start Docker Compose...");
-            if (!StartDockerCompose(dockerComposePath))
+            if (!StartDockerCompose(dockerComposePath, projectName))
             {
                 throw new Exception($"Failed to start Docker Compose. Please follow these steps:\n" +
-                                    $"1. Navigate to: {AppContext.BaseDirectory}\n" +
+                                    $"1. Navigate to: {projectRoot}\n" +
                                     $"2. Run: docker-compose -f '{dockerComposePath}' up -d\n" +
                                     "3. Ensure Docker is running properly and retry if necessary.");
             }
@@ -91,7 +102,7 @@ public static class DockerConfigurationMiddleware
         }
     }
 
-    private static bool StartDockerCompose(string dockerComposePath)
+    private static bool StartDockerCompose(string dockerComposePath, string projectName)
     {
         try
         {
@@ -100,7 +111,7 @@ public static class DockerConfigurationMiddleware
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = "docker-compose",
-                    Arguments = $"-f \"{dockerComposePath}\" up -d",
+                    Arguments = $"-p \"{projectName}\" -f \"{dockerComposePath}\" up -d",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     UseShellExecute = false,
