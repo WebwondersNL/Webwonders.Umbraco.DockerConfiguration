@@ -19,5 +19,6 @@
   "Screenshots": [],
   "Tags": [ "Umbraco Cloud", "Umbraco", "Docker", "SQL Server", "Configuration" ],
   "Title": "Webwonders Umbraco DockerConfiguration",
-  "VideoUrl": ""
+  "VideoUrl": "",
+  "VersionDependencyMode": "SemVer"
 }
