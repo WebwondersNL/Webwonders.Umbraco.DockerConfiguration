@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Configuration;
 
 namespace Webwonders.Umbraco.DockerConfiguration;
@@ -15,7 +16,7 @@ public static class DockerConfigurationMiddleware
         
         // Directly read from environment variables
         var useLocalSql = Environment.GetEnvironmentVariable("Use_Local_Docker_SQL") ?? "false";
-        var dbName      = Environment.GetEnvironmentVariable("Local_Docker_DB_NAME");
+        var dbName = Environment.GetEnvironmentVariable("Local_Docker_DB_NAME");
         var dbPassword  = Environment.GetEnvironmentVariable("Local_Docker_PASSWORD");
         var dbPort      = Environment.GetEnvironmentVariable("Local_Docker_PORT");
         
@@ -23,10 +24,12 @@ public static class DockerConfigurationMiddleware
         var projectRootOverride = Environment.GetEnvironmentVariable("Local_Docker_CONTAINER_DIRECTORY_OVERRIDE");
         var projectRoot = !string.IsNullOrEmpty(projectRootOverride)
             ? projectRootOverride
-            : Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+            : ResolveProjectRoot(AppContext.BaseDirectory) 
+              ?? Directory.GetCurrentDirectory();
         
         var defaultProjectName = Path.GetFileName(projectRoot);
-        var projectName = Environment.GetEnvironmentVariable("Local_Docker_PROJECT_NAME") ?? defaultProjectName;
+        var rawProjectName = Environment.GetEnvironmentVariable("Local_Docker_PROJECT_NAME") ?? defaultProjectName;
+        var projectName = SanitizeComposeProjectName(rawProjectName, "umbraco");
 
         if (useLocalSql.Equals("true", StringComparison.OrdinalIgnoreCase))
         {
@@ -74,20 +77,19 @@ public static class DockerConfigurationMiddleware
             ";
 
             
-            var dockerComposePath = Path.Combine(projectRoot, "docker-compose.yml");
+            var composeDir = Path.Combine(projectRoot, ".docker");
+            Directory.CreateDirectory(composeDir);
+
+            var dockerComposePath = Path.Combine(composeDir, "docker-compose.yml");
             File.WriteAllText(dockerComposePath, dockerComposeContent);
             Console.WriteLine("docker-compose.yml generated successfully.");
 
             Console.WriteLine("Attempting to start Docker Compose...");
-            if (!StartDockerCompose(dockerComposePath, projectName))
-            {
-                throw new Exception($"Failed to start Docker Compose. Please follow these steps:\n" +
-                                    $"1. Navigate to: {projectRoot}\n" +
-                                    $"2. Run: docker-compose -f '{dockerComposePath}' up -d\n" +
-                                    "3. Ensure Docker is running properly and retry if necessary.");
-            }
 
-            var connectionString = $"Server=127.0.0.1,{dbPort};Database={dbName};User Id=sa;Password={dbPassword};TrustServerCertificate=True;";
+            StartDockerComposeOrThrow(dockerComposePath, projectName, projectRoot);
+            
+            
+            var connectionString = $"Server=127.0.0.1,{dbPort};Database={dbName};User Id=sa;Password={dbPassword};TrustServerCertificate=True;Encrypt=false;";
             builder.AddInMemoryCollection(new Dictionary<string, string>
             {
                 { "ConnectionStrings:umbracoDbDSN", connectionString },
@@ -101,32 +103,55 @@ public static class DockerConfigurationMiddleware
             Console.WriteLine("Use_Local_Docker_SQL is disabled. Skipping docker configuration.");
         }
     }
-
-    private static bool StartDockerCompose(string dockerComposePath, string projectName)
+    
+    private static (bool ok, int exitCode, string stdout, string stderr, string command) TryRun(string fileName, string arguments, string workingDir)
     {
         try
         {
-            var process = new Process
+            var psi = new ProcessStartInfo
             {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = "docker-compose",
-                    Arguments = $"-p \"{projectName}\" -f \"{dockerComposePath}\" up -d",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                }
+                FileName = fileName,
+                Arguments = arguments,
+                WorkingDirectory = workingDir,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
-            process.Start();
-            process.WaitForExit();
-            return process.ExitCode == 0;
+            using var p = new Process { StartInfo = psi };
+            p.Start();
+
+            var stdout = p.StandardOutput.ReadToEnd();
+            var stderr = p.StandardError.ReadToEnd();
+
+            p.WaitForExit();
+
+            return (p.ExitCode == 0, p.ExitCode, stdout, stderr, $"{fileName} {arguments}");
         }
-        catch
+        catch (Exception ex)
         {
-            return false;
+            return (false, -1, "", ex.ToString(), $"{fileName} {arguments}");
         }
+    }
+
+    private static void StartDockerComposeOrThrow(string dockerComposePath, string projectName, string workingDir)
+    {
+        // Prefer v2: `docker compose ...`
+        var v2 = TryRun("docker", $"compose -p \"{projectName}\" -f \"{dockerComposePath}\" up -d", workingDir);
+        if (v2.ok) return;
+
+        // Fallback to v1: `docker-compose ...`
+        var v1 = TryRun("docker-compose", $"-p \"{projectName}\" -f \"{dockerComposePath}\" up -d", workingDir);
+        if (v1.ok) return;
+
+        // Throw with REAL diagnostics
+        throw new Exception(
+            "Failed to start Docker Compose.\n\n" +
+            $"Tried:\n1) {v2.command}\n2) {v1.command}\n\n" +
+            $"docker compose exit={v2.exitCode}\nSTDERR:\n{v2.stderr}\nSTDOUT:\n{v2.stdout}\n\n" +
+            $"docker-compose exit={v1.exitCode}\nSTDERR:\n{v1.stderr}\nSTDOUT:\n{v1.stdout}\n"
+        );
     }
 
     private static bool IsDockerInstalled()
@@ -193,5 +218,44 @@ public static class DockerConfigurationMiddleware
         {
             Console.WriteLine($"Please open your browser and visit: {url}");
         }
+    }
+    
+    private static string? ResolveProjectRoot(string startDir)
+    {
+        var dir = new DirectoryInfo(startDir);
+
+        while (dir != null)
+        {
+            // Heuristics: any of these indicate a repo/solution/project root
+            var hasCsproj = dir.EnumerateFiles("*.csproj", SearchOption.TopDirectoryOnly).Any();
+            var hasSln    = dir.EnumerateFiles("*.sln",   SearchOption.TopDirectoryOnly).Any();
+            var hasGit    = Directory.Exists(Path.Combine(dir.FullName, ".git"));
+
+            if (hasCsproj || hasSln || hasGit)
+                return dir.FullName;
+
+            dir = dir.Parent;
+        }
+
+        return null;
+    }
+    
+    
+    private static string SanitizeComposeProjectName(string? value, string fallback)
+    {
+        var v = string.IsNullOrWhiteSpace(value) ? fallback : value;
+
+        // lower-case + replace invalid chars with underscores
+        v = v.ToLowerInvariant();
+        v = Regex.Replace(v, @"[^a-z0-9_-]", "_");
+
+        // must start with a letter/number
+        v = Regex.Replace(v, @"^[^a-z0-9]+", "");
+
+        // avoid empty result
+        if (string.IsNullOrWhiteSpace(v))
+            v = fallback.ToLowerInvariant();
+
+        return v;
     }
 }
